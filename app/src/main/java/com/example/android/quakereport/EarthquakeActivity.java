@@ -15,33 +15,71 @@
  */
 package com.example.android.quakereport;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.ListView;
 
-import java.util.ArrayList;
+import java.net.URL;
+import java.util.List;
 
 public class EarthquakeActivity extends AppCompatActivity {
 
-    public static final String LOG_TAG = EarthquakeActivity.class.getName();
+    public static final String LOG_TAG = "mytagggg";
+
+    /**
+     * JSON response for a USGS query
+     */
+    private static final String USGS_REQUEST_URL = "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&minmag=5&limit=10";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.earthquake_activity);
 
-        // Create a fake list of earthquake locations.
-        ArrayList<Earthquake> earthquakes = QueryUtils.extractEarthquakes();
 
-        // Find a reference to the {@link ListView} in the layout
-        ListView earthquakeListView = (ListView) findViewById(R.id.list);
-        
-        // Create a new {@link ArrayAdapter} of earthquakes
+
+        EarthquakeAsyncTask x = new EarthquakeAsyncTask();
+        x.execute();
+    }
+   private void updateUI(List<Earthquake> earthquakes) {
+       Log.i(LOG_TAG, "######################################### list = " + earthquakes);
+       // Find a reference to the {@link ListView} in the layout
+       ListView earthquakeListView = (ListView) findViewById(R.id.list);
+
+       // Create a new {@link ArrayAdapter} of earthquakes
         final EarthquakeAdapter adapter = new EarthquakeAdapter(
-                this, earthquakes);
+               this, earthquakes);
 
-        // Set the adapter on the {@link ListView}
-        // so the list can be populated in the user interface
-        earthquakeListView.setAdapter(adapter);
+       // Set the adapter on the {@link ListView}
+       // so the list can be populated in the user interface
+       earthquakeListView.setAdapter(adapter);
+
+
+   }
+    private class EarthquakeAsyncTask extends AsyncTask<String, Void, List<Earthquake>> {
+
+        @Override
+        protected List<Earthquake> doInBackground(String... urls) {
+            // Create URL object
+            URL url = QueryUtils.createUrl(USGS_REQUEST_URL);
+            // Make HTTP request
+
+            String jsonResponse = QueryUtils.makeHttpRequest(url);
+            Log.i(LOG_TAG, "######################################### json = " + jsonResponse);
+
+            List<Earthquake> list = QueryUtils.extractFeaturesFromEarthquakes(jsonResponse);
+
+            return list;
+        }
+
+
+        @Override
+        protected void onPostExecute(List<Earthquake> earthquakes) {
+            Log.i(LOG_TAG, "######################################### post = " + earthquakes);
+
+            updateUI(earthquakes);
+        }
     }
 }
