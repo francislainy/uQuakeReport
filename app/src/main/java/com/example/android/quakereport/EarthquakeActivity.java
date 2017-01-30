@@ -15,16 +15,16 @@
  */
 package com.example.android.quakereport;
 
-import android.os.AsyncTask;
+import android.app.LoaderManager;
+import android.content.Loader;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ListView;
 
-import java.net.URL;
 import java.util.List;
 
-public class EarthquakeActivity extends AppCompatActivity {
+public class EarthquakeActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Earthquake>> {
 
     public static final String LOG_TAG = "mytagggg";
 
@@ -38,48 +38,65 @@ public class EarthquakeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.earthquake_activity);
 
+        getLoaderManager().initLoader(1, null, this);
 
+//        EarthquakeAsyncTask x = new EarthquakeAsyncTask();
+//        x.execute();
 
-        EarthquakeAsyncTask x = new EarthquakeAsyncTask();
-        x.execute();
     }
-   private void updateUI(List<Earthquake> earthquakes) {
-       Log.i(LOG_TAG, "######################################### list = " + earthquakes);
-       // Find a reference to the {@link ListView} in the layout
-       ListView earthquakeListView = (ListView) findViewById(R.id.list);
 
-       // Create a new {@link ArrayAdapter} of earthquakes
+    private void updateUI(List<Earthquake> earthquakes) {
+        Log.i(LOG_TAG, "######################################### list = " + earthquakes);
+        // Find a reference to the {@link ListView} in the layout
+        ListView earthquakeListView = (ListView) findViewById(R.id.list);
+
+        // Create a new {@link ArrayAdapter} of earthquakes
         final EarthquakeAdapter adapter = new EarthquakeAdapter(
-               this, earthquakes);
+                this, earthquakes);
 
-       // Set the adapter on the {@link ListView}
-       // so the list can be populated in the user interface
-       earthquakeListView.setAdapter(adapter);
+        // Set the adapter on the {@link ListView}
+        // so the list can be populated in the user interface
+        earthquakeListView.setAdapter(adapter);
 
-
-   }
-    private class EarthquakeAsyncTask extends AsyncTask<String, Void, List<Earthquake>> {
-
-        @Override
-        protected List<Earthquake> doInBackground(String... urls) {
-            // Create URL object
-            URL url = QueryUtils.createUrl(USGS_REQUEST_URL);
-            // Make HTTP request
-
-            String jsonResponse = QueryUtils.makeHttpRequest(url);
-            Log.i(LOG_TAG, "######################################### json = " + jsonResponse);
-
-            List<Earthquake> list = QueryUtils.extractFeaturesFromEarthquakes(jsonResponse);
-
-            return list;
-        }
-
-
-        @Override
-        protected void onPostExecute(List<Earthquake> earthquakes) {
-            Log.i(LOG_TAG, "######################################### post = " + earthquakes);
-
-            updateUI(earthquakes);
-        }
     }
+
+    @Override
+    public Loader<List<Earthquake>> onCreateLoader(int id, Bundle args) {
+        return new EarthquakeLoader(this, USGS_REQUEST_URL);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
+        updateUI(earthquakes);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<List<Earthquake>> loader) {
+
+    }
+
+
+//private class EarthquakeAsyncTask extends AsyncTask<String, Void, List<Earthquake>> {
+//
+//    @Override
+//    protected List<Earthquake> doInBackground(String... urls) {
+//        // Create URL object
+//        URL url = QueryUtils.createUrl(USGS_REQUEST_URL);
+//        // Make HTTP request
+//
+//        String jsonResponse = QueryUtils.makeHttpRequest(url);
+//        Log.i(LOG_TAG, "######################################### json = " + jsonResponse);
+//
+//        List<Earthquake> list = QueryUtils.extractFeaturesFromEarthquakes(jsonResponse);
+//
+//        return list;
+//    }
+//
+//    @Override
+//    protected void onPostExecute(List<Earthquake> earthquakes) {
+//        Log.i(LOG_TAG, "######################################### post = " + earthquakes);
+//
+//        updateUI(earthquakes);
+//    }
+//}
 }
