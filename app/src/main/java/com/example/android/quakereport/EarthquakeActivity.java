@@ -16,22 +16,33 @@
 package com.example.android.quakereport;
 
 import android.app.LoaderManager;
+import android.content.Context;
+import android.content.Intent;
 import android.content.Loader;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import java.util.List;
 
 public class EarthquakeActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Earthquake>> {
 
-    public static final String LOG_TAG = "mytagggg";
+    public static final String LOG_TAG = EarthquakeActivity.class.getName();
 
     /**
      * JSON response for a USGS query
      */
     private static final String USGS_REQUEST_URL = "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&minmag=5&limit=10";
+    private TextView mEmptyStateView;
+    private boolean isConnected;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +50,15 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
         setContentView(R.layout.earthquake_activity);
 
         getLoaderManager().initLoader(1, null, this);
+        Log.i(LOG_TAG, getLoaderManager().initLoader(1, null, this) + " getLoaderManager");
+
+        mEmptyStateView = (TextView) findViewById(R.id.empty_view);
+
+        // Check network Connectivity
+        ConnectivityManager cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+
 
 //        EarthquakeAsyncTask x = new EarthquakeAsyncTask();
 //        x.execute();
@@ -49,6 +69,8 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
         Log.i(LOG_TAG, "######################################### list = " + earthquakes);
         // Find a reference to the {@link ListView} in the layout
         ListView earthquakeListView = (ListView) findViewById(R.id.list);
+
+        earthquakeListView.setEmptyView(mEmptyStateView);
 
         // Create a new {@link ArrayAdapter} of earthquakes
         final EarthquakeAdapter adapter = new EarthquakeAdapter(
@@ -62,17 +84,47 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
 
     @Override
     public Loader<List<Earthquake>> onCreateLoader(int id, Bundle args) {
+        Log.i(LOG_TAG, new EarthquakeLoader(this, USGS_REQUEST_URL) + " onCreateLoader");
         return new EarthquakeLoader(this, USGS_REQUEST_URL);
     }
 
     @Override
     public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
+        Log.i(LOG_TAG, " OnLoadFinished");
+
+        if (isConnected == true)
+            // Set empty state text to display "No earthquake found.";
+            mEmptyStateView.setText("No earthquakes found.");
+        else
+            mEmptyStateView.setText("No internet connection");
+
+        ProgressBar progressBar = (ProgressBar) findViewById(R.id.loading_spinner);
+        progressBar.setVisibility(View.GONE);
+
         updateUI(earthquakes);
     }
 
     @Override
     public void onLoaderReset(Loader<List<Earthquake>> loader) {
+        Log.i(LOG_TAG, " OnLoaderReset");
+    }
 
+    @Override
+    public boolean onCreateOptionsMenu (Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if(id == R.id.action_settings) {
+            Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(settingsIntent);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
 

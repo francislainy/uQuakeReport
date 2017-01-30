@@ -31,6 +31,7 @@ public class EarthquakeLoader extends AsyncTaskLoader<List<Earthquake>> {
 
     @Override
     protected void onStartLoading() {
+        Log.i(LOG_TAG, " onStartLoading");
         forceLoad();
     }
 
@@ -48,6 +49,8 @@ public class EarthquakeLoader extends AsyncTaskLoader<List<Earthquake>> {
         Log.i(LOG_TAG, "######################################### json = " + jsonResponse);
 
         List<Earthquake> list = QueryUtils.extractFeaturesFromEarthquakes(jsonResponse);
+
+        Log.i(LOG_TAG, " LoadInBackground");
 
         return list;
 
